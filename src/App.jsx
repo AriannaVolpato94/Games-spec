@@ -1,6 +1,6 @@
-import { Routing } from "./routes/Routing";
-import SessionProvider from "./context/SessionProvider";
-import FavoritesProvider from './context/FavoritesProvider';
+import Routing  from "./routes/Routing";
+import SessionProvider from "../src/context/SessionProvider";
+import FavoritesProvider from "./context/FavoritesProvider";
 
 export default function App() {
   return (

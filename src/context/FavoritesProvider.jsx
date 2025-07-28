@@ -6,7 +6,14 @@ import FavoritesContext from "./FavoritesContext.js";
 
 export default function FavoritesProvider ({children}) {
     const [favorites, setFavorites] = useState([]);
-    const {session} = useContext (SessionContext);
+    const sessionContext = useContext(SessionContext);
+
+if (!sessionContext) {
+  throw new Error("FavoritesProvider must be used within a SessionProvider");
+}
+
+const { session } = sessionContext;
+
 
 const getFavorites = useCallback(async () => {
     let { data: favourites, error } = await supabase

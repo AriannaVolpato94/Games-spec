@@ -1,7 +1,7 @@
 import { useContext, useState } from "react";
 import {FaHeart, FaRegHeart} from "react-icons/fa";
 import supabase from "../../supabase/supabase-client.js";
-import SessoionContext from "../../contex/SessionContext.js";
+import SessoionContext from "../../context/SessionContext.js";
 
 export default function ToggleFavorite ({data}) {
     const {session} = useContext (SessoionContext);
