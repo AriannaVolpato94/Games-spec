@@ -1,46 +1,44 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import supabase from "../supabase/supabase-client";
-import {
-  getErrors,
-  getFieldError,
-  ConfirmSchemaLogin,
-} from "../lib/validationForm.js";
+import  supabase  from "../../src/supabase/supabase-client"; 
+import { ConfirmSchemaLogin, getErrors, getFieldError } from "../../src/lib/validationForm.js"; 
 
-export default function LoginPage() {
-  const navigate = useNavigate();
-
-  const [formSubmitted, setFormSubmitted] = useState(false);
-  const [formErrors, setFormErrors] = useState({});
-  const [touchedFields, setTouchedFields] = useState({});
+function LoginForm() {
   const [formState, setFormState] = useState({
     email: "",
     password: "",
   });
 
-  const onSubmit = async (event) => {
-    event.preventDefault();
+  const [formErrors, setFormErrors] = useState({});
+  const [touchedFields, setTouchedFields] = useState({});
+  const [formSubmitted, setFormSubmitted] = useState(false);
+
+  const navigate = useNavigate();
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
     setFormSubmitted(true);
 
     const { error, data } = ConfirmSchemaLogin.safeParse(formState);
 
     if (error) {
-      const errors = getErrors(error); 
+      const errors = getErrors(error);
       setFormErrors(errors);
       console.log(errors);
-    } else {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: data.email,
-        password: data.password,
-      });
+      return;
+    }
 
-      if (error) {
-        alert("Signing in error!");
-      } else {
-        alert("Signed In!");
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        navigate("/");
-      }
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: data.email,
+      password: data.password,
+    });
+
+    if (signInError) {
+      alert("Signing in error!");
+    } else {
+      alert("Signed in!");
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      navigate("/");
     }
   };
 
@@ -51,17 +49,12 @@ export default function LoginPage() {
   };
 
   const isInvalid = (property) => {
-    if (formSubmitted || touchedFields[property]) {
-      return !!formErrors[property];
-    }
-    return undefined;
+    return (formSubmitted || touchedFields[property]) && !!formErrors[property];
   };
 
   const setField = (property, valueSelector) => (e) => {
-    setFormState((prev) => ({
-      ...prev,
-      [property]: valueSelector ? valueSelector(e) : e.target.value,
-    }));
+    const value = valueSelector ? valueSelector(e) : e.target.value;
+    setFormState((prev) => ({ ...prev, [property]: value }));
   };
 
   return (
@@ -98,3 +91,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+export default LoginForm;

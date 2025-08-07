@@ -4,25 +4,25 @@ import SessionContext from "./SessionContext.js";
 import FavoritesContext from "./FavoritesContext.js";
 
 
-export default function FavoritesProvider ({children}) {
-    const [favorites, setFavorites] = useState([]);
-    const sessionContext = useContext(SessionContext);
+export default function FavoritesProvider({ children }) {
+  const [favorites, setFavorites] = useState([]);
+  const sessionContext = useContext(SessionContext);
 
-if (!sessionContext) {
-  throw new Error("FavoritesProvider must be used within a SessionProvider");
-}
+  if (!sessionContext) {
+    throw new Error("FavoritesProvider must be used within a SessionProvider");
+  }
 
-const { session } = sessionContext;
+  const { session } = sessionContext;
 
-
-const getFavorites = useCallback(async () => {
-    let { data: favourites, error } = await supabase
+  
+  const getFavorites = useCallback(async () => {
+    const { data: favourites, error } = await supabase
       .from("favorites")
       .select("*")
       .eq("user_id", session?.user.id);
+
     if (error) {
-      console.log(error);
-      console.log("Errore in console");
+      console.error("Errore nel recupero dei preferiti:", error);
     } else {
       setFavorites(favourites);
     }
@@ -39,8 +39,9 @@ const getFavorites = useCallback(async () => {
           game_image: game.background_image,
         },
       ])
-      .select();
+      .select(); 
   };
+
 
   const removeFavorite = async (gameId) => {
     await supabase
@@ -51,10 +52,11 @@ const getFavorites = useCallback(async () => {
   };
 
   useEffect(() => {
-    if (session) {
-      getFavorites()
-    }
-    const favorites = supabase
+    if (!session) return;
+
+    getFavorites();
+
+    const favoritesChannel = supabase
       .channel("favorites")
       .on(
         "postgres_changes",
@@ -64,14 +66,20 @@ const getFavorites = useCallback(async () => {
       .subscribe();
 
     return () => {
-      if (favorites) {
-        supabase.removeChannel(favorites);
-      }
-      favorites.unsubscribe();
+      supabase.removeChannel(favoritesChannel);
     };
   }, [getFavorites, session]);
 
-return(<FavoritesContext.Provider value={{favorites, setFavorites, addFavorites, removeFavorite}}>{children}</FavoritesContext.Provider>)
-
-
+  return (
+    <FavoritesContext.Provider
+      value={{
+        favorites,
+        setFavorites,
+        addFavorites,
+        removeFavorite,
+      }}
+    >
+      {children}
+    </FavoritesContext.Provider>
+  );
 }
