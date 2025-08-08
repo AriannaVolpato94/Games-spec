@@ -15,7 +15,22 @@ function LoginForm() {
 
   const navigate = useNavigate();
 
-  const onSubmit = async (e) => {
+  const handleChange = (field, valueSelector) => (event) => {
+    const value = valueSelector ? valueSelector(event) : event.target.value;
+    setFormState((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleBlur = (field) => () => {
+    const errorMessage = getFieldError(field, formState[field]);
+    setFormErrors((prev) => ({ ...prev, [field]: errorMessage }));
+    setTouchedFields((prev) => ({ ...prev, [field]: true }));
+  };
+
+  const isFieldInvalid = (field) => {
+    return (formSubmitted || touchedFields[field]) && Boolean(formErrors[field]);
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setFormSubmitted(true);
 
@@ -34,41 +49,26 @@ function LoginForm() {
     });
 
     if (signInError) {
-      alert("Signing in error!");
+      alert("Errore durante l'accesso!");
     } else {
-      alert("Signed in!");
+      alert("Accesso riuscito!");
       await new Promise((resolve) => setTimeout(resolve, 1000));
       navigate("/");
     }
   };
 
-  const onBlur = (property) => () => {
-    const message = getFieldError(property, formState[property]);
-    setFormErrors((prev) => ({ ...prev, [property]: message }));
-    setTouchedFields((prev) => ({ ...prev, [property]: true }));
-  };
-
-  const isInvalid = (property) => {
-    return (formSubmitted || touchedFields[property]) && !!formErrors[property];
-  };
-
-  const setField = (property, valueSelector) => (e) => {
-    const value = valueSelector ? valueSelector(e) : e.target.value;
-    setFormState((prev) => ({ ...prev, [property]: value }));
-  };
-
   return (
     <div className="container">
-      <form onSubmit={onSubmit} noValidate>
+      <form onSubmit={handleSubmit} noValidate>
         <label htmlFor="email">Email:</label>
         <input
           type="email"
           id="email"
           name="email"
           value={formState.email}
-          onChange={setField("email")}
-          onBlur={onBlur("email")}
-          aria-invalid={isInvalid("email")}
+          onChange={handleChange("email")}
+          onBlur={handleBlur("email")}
+          aria-invalid={isFieldInvalid("email")}
           required
         />
         {formErrors.email && <small>{formErrors.email}</small>}
@@ -79,9 +79,9 @@ function LoginForm() {
           id="password"
           name="password"
           value={formState.password}
-          onChange={setField("password")}
-          onBlur={onBlur("password")}
-          aria-invalid={isInvalid("password")}
+          onChange={handleChange("password")}
+          onBlur={handleBlur("password")}
+          aria-invalid={isFieldInvalid("password")}
           required
         />
         {formErrors.password && <small>{formErrors.password}</small>}
